@@ -1,0 +1,342 @@
+---
+title: "STAC51"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+
+```{r}
+wald <- function(prediction, n , alpha){
+    z = qnorm(1-alpha/2)
+    lower_b = prediction - z*sqrt((prediction*(1-prediction))/n)
+    upper_b = prediction + z*sqrt((prediction*(1-prediction))/n)
+    return(c(lower_b,upper_b))
+}
+```
+
+```{r}
+score <- function(prediction, n , alpha){
+    z = qnorm(1-alpha/2)
+    lower_b = ((n*prediction+z^2/2)-z*sqrt(n*prediction*(1-prediction) +z^2/4))/(n+z^2)
+    upper_b = ((n*prediction+z^2/2)+z*sqrt(n*prediction*(1-prediction) +z^2/4))/(n+z^2)
+    return(c(lower_b,upper_b))
+}
+```
+
+```{r}
+agresti <- function(y, n , alpha){
+    z = qnorm(1-alpha/2)
+    prediction = (y+2)/(n+4)
+    lower_b =  prediction - z*sqrt((prediction*(1-prediction))/(n+4))
+    upper_b =  prediction + z*sqrt((prediction*(1-prediction))/(n+4))
+    return(c(lower_b,upper_b))
+}
+```
+
+```{r}
+clopper <- function(y, n , alpha){
+    alpha = alpha/2
+    lower_b =  (1+(n-y+1)/(y*qf(alpha,2*y,2*(n-y+1))))^-1
+    upper_b =  (1+(n-y)/((y+1)*qf(1-alpha,2*(y+1),2*(n-y))))^-1
+    return(c(lower_b,upper_b))
+}
+```
+
+
+```{r}
+n = 30
+y = 5
+p_hat = y/n
+pi0 = 0.1
+
+z_score = (p_hat-p0)/sqrt(pi0*(1-pi0)/n)
+pval_score = 2*(1-pnorm(abs(z_score)))
+
+z_wald = (pi_hat - pi0)/sqrt(pi_hat*(1-pi_hat)/n)
+pval_score = 2*(1-pnorm(abs(z_wald)))
+
+z_lrt = ((pi0)^y*(1-pi0)^{n-y})/(pi_hat^y*(1-pi_hat)^{n-y})
+LRT = -2*log(z_lrt)
+pvalue.LRT = pchisq()
+```
+
+
+```{r}
+#Q2e
+x=5; n=40
+#z for score test
+z_score= sqrt(n)*(x/n-0.1)/sqrt(0.1*0.9)
+CI = score(x/n,n,0.09)
+cat(sprintf("The score test value for the given test is %g \n",z_score))
+cat(sprintf("The Score's connfidence interval is (%g,%g) \n",CI[1],CI[2]))
+```
+
+```{r}
+#Q2f
+#Confidence intervals for different methods
+
+x=5; n=30
+#z for score test
+z_score= sqrt(n)*(x/n-0.1)/sqrt(0.1*0.9)
+
+CI1= wald(x/n,n,0.05)
+
+CI3= agresti(x,n,0.05)
+cat(sprintf("The Wald's connfidence interval is (%g,%g) \n",CI1[1],CI1[2]))
+
+
+cat(sprintf("The Agresti-Coull's connfidence interval is (%g,%g) \n",CI3[1],CI3[2]))
+```
+```{r}
+#3(d)
+qchisq(0.9,1)
+cat(sprintf("The likelihood ratio test statistics should be atleast %g to be significant"
+            , qchisq(0.9,1)))
+
+```
+
+```{r}
+#3e.
+library(rootSolve)
+n= 30
+y = 5
+phat = y/n
+alpha=.1
+func <- function(pi0){
+  -2*(y*log(pi0)+(n-y)*log(1-pi0)-y*log(phat)-(n-y)*log(1-phat))-qchisq(1-alpha,df=1)
+}
+uniroot.all(f=func, interval=c(0,1))
+```
+
+
+```{r}
+set.seed(1003599732)
+#4a.
+sum = 0
+for (i in rbinom(100000,25,0.06))
+  {if(0.06>=wald(i/25,25,.05)[1] & 0.06<=wald(i/25,25,0.05)[2]){
+    sum = sum +1}}
+sum/100000
+```
+I would expect for this number to be closer to .95 since we are taking the 95 percent interval, but this might be due to the fact that pi is really small so its skewed. 
+
+```{r}
+#4bi
+for (i in 0:25){
+  print(wald(i/25,25,0.05))}
+```
+```{r}
+#4bii
+for (i in 0:25)
+  {if(0.06>=wald(i/25,25,.05)[1] & 0.06<=wald(i/25,25,0.05)[2])
+    {print(i)}}
+```
+If y =1,2,3,4,5 then I(y) = 1 , and 0 other wise
+
+```{r}
+#4iii
+sum=0
+for (i in 1:5){
+   k = dbinom(i,25,0.06)
+      sum = k + sum}
+sum
+```
+
+```{r}
+#5a
+set.seed(1003599732)
+n = 25
+pi = seq(.01,.99 , by= 0.01)
+index = 1
+confi_lvl = matrix(,nrow=99, ncol = 2)
+for(p in pi){
+  temp = c()
+  sum = 0
+  for (i in 0:25){
+    ci = wald(i/25, 25, 0.05)
+    if(p>=ci[1] & p<=ci[2]){
+      temp <- c(temp,i)
+    }
+  }
+ 
+  for (c in temp){
+    binomial = dbinom(c,25, p)
+    sum = binomial + sum
+  }
+
+  confi_lvl[index,] = c(p,sum)
+  index = index+1
+}
+plot(x = confi_lvl[,1], y = confi_lvl[,2], xlab = "Pi" , ylab = "Confidence Level", type="l") + abline(h = 0.95) 
+```
+I learn from my plot that as pi goes to the extreme(when pi is close to 0 or 1), the confidence level drops very fast. Which mean that as the pi level goes to the extreme we shouldn't use walds CI, since the confidence level is low. 
+
+```{r}
+#5b
+set.seed(1003599732)
+n = 500
+pi = seq(.01,.99 , by= 0.01)
+index = 1
+confi_lvl500 = matrix(,nrow=99, ncol = 2)
+for(p in pi){
+  temp = c()
+  sum = 0
+  for (i in 0:500){
+    ci = wald(i/500, 500, 0.05)
+    if(p>=ci[1] & p<=ci[2]){
+      temp <- c(temp,i)
+    }
+  }
+  for (c in temp){
+    binomial = dbinom(c,500, p)
+    sum = binomial + sum
+  }
+  confi_lvl500[index,] = c(p,sum)
+  index= index+1
+}
+plot(x = confi_lvl500[,1], y = confi_lvl500[,2], xlab = "Pi" , ylab = "Confidence Level", type = "l") + abline(h = 0.95)+ lines(x= confi_lvl[,1], y= confi_lvl[,2], col= "purple")
+
+legend(.4,.9,legend=c("N=500","N=25"),col=c("black","purple"),lty=1)
+
+```
+We can see with this graph that, as N increases, the confidence level manages to stay at the 95 confidence level for much longer then when N is lower. We can see from this graph that When N = 500 it is also much more consistently around the 95 percent confidence level. Where as N=25 it varies a lot.  
+```{r}
+#helper code for 5c
+sum = 0
+sumbin <- function(list, n, p){
+  for(c in list){
+    binomial = dbinom(c,n, p)
+    sum = binomial + sum
+  }
+  return(sum)
+}
+```
+
+```{r}
+#5c
+n = 25
+pi = seq(.01,.99 , by= 0.01)
+index = 1
+confi_lvl = matrix(,nrow=99, ncol = 5)
+confi_lvl[,1] = pi
+for(p in pi){
+  waldCI = c()
+  for (i in 0:25){
+    ci = wald(i/25, 25, 0.05)
+    if(p>=ci[1] & p<=ci[2]){
+      waldCI <- c(waldCI,i)
+    }
+  }
+  scoreCI = c()
+  for (i in 0:25){
+    ci = score(i/25, 25, 0.05)
+    if(p>=ci[1] & p<=ci[2]){
+      scoreCI <- c(scoreCI,i)
+    }
+  }
+  agrestiCI = c()
+  for (i in 0:25){
+    ci = agresti(i, 25, 0.05) 
+    if(p>=ci[1] & p<=ci[2]){
+      agrestiCI <- c(agrestiCI,i)
+    }
+  }
+  clopperCI = c()
+  for (i in 1:24){
+    ci = clopper(i, 25, 0.05)
+    if(p>=ci[1] & p<=ci[2]){
+      clopperCI <- c(clopperCI,i)
+    }
+  }
+  
+  confi_lvl[index,2] = sumbin(waldCI,25,p)
+  confi_lvl[index,3] = sumbin(scoreCI,25,p)
+  confi_lvl[index,4] = sumbin(agrestiCI,25,p)
+  confi_lvl[index,5] = sumbin(clopperCI,25,p)
+
+  index= index+1
+}
+plot(x = confi_lvl[,1], y = confi_lvl[,2], xlab = "Pi" , ylab = "Confidence Level", type = "l", col= "blue") + abline(h = 0.95) + lines(x= confi_lvl[,1],y = confi_lvl[,3], col= "green")+lines(x= confi_lvl[,1],y=confi_lvl[,4],col= "purple") + lines(x= confi_lvl[,1],y=confi_lvl[,5], col = "red") 
+
+legend(.4,.6,legend=c("Wald","Score","Agresti-Coull","Clopper-Preason"),col=c("blue","green","purple","red"),lty=1)
+
+```
+We can see from this graph that Argesti-Coull and Score's confidence level stays much closer to the 95 percent confidence level. Where as wald and clopper-pearson's confidence level drops very fast to near 20 percent when pi is at the extremes (when pi is close to 0 or 1). However when pi is not around the extreme's clopper-pearon's confidence level is the highest among all the rest.  
+```{r}
+power <- function(p,p_0,n,alpha){
+  z = qnorm(1-alpha)
+  z1 = (p_0-p)/sqrt(p*(1-p)/n)+z*sqrt((p_0*(1-p_0))/(p*(1-p)))
+  pp = pnorm(z1, lower.tail = F)
+  return(pp)
+}
+```
+
+``````{r}
+#Q6 (b)
+
+n = 100
+p = 0.55   #given alternative prob
+p_0 = 0.5   #given hypothesis prob
+alt = "greater"  #H_a: p>p_0
+bb = power(p , p_0 , n , 0.05)
+bb
+
+#for power calculation we are using exact test
+```
+This is the probability that the test reject the null hypothesis given the null hypothesis is false. So the probability of not making a type two error. This is surprisingly low, because we would want this to be as high as possible. As we increase alpha, the power also increases. 
+
+```{r}
+#Q6 (c)
+index = 1
+n = 100
+p = seq(0.4,0.7,0.01)  #given alternative prob
+p_0 = 0.5    #given hypothesis prob
+
+alpha = 0.01
+pmatrix = matrix(,nrow=40,ncol=2)
+for(i in p){
+  powerlvl = power(i , p_0 , n , 0.05)
+  pmatrix[index,] = c(i,powerlvl)
+  index = index + 1
+}
+
+plot(pmatrix[,1],pmatrix[,2],xlab = "pi", ylab = "Power of the Test", type="l")
+```
+As we increase pi, the power of the test increases. This reminds me of the logistic curve where in the begining it is nearly flat then there is exponential growth and then near the end it goes back to being flat. Which means that anything after .7 would have a high power of test and any below .4 would have a very low power of test. 
+
+``````{r}
+#Q6 (d)
+p = seq(0.4,0.7,0.01)
+p_0 = 0.5
+alpha = 0.01
+
+power100 = matrix(,nrow=40,ncol=2)
+index = 1
+for(i in p){
+  powerlvl = power(i , p_0 , 100 , 0.05)
+  power100[index,] = c(i,powerlvl)
+  index = index + 1
+}
+
+power200= matrix(,nrow=40,ncol=2)
+index = 1
+for(i in p){
+  powerlvl = power(i , p_0 , 200 , 0.05)
+  power200[index,] = c(i,powerlvl)
+  index = index + 1
+}
+
+power300= matrix(,nrow=40,ncol=2)
+index = 1
+for(i in p){
+  powerlvl = power(i , p_0 , 300 , 0.05)
+  power300[index,] = c(i,powerlvl)
+  index = index + 1
+}
+
+plot(power100[,1],power100[,2],xlab = "pi", ylab = "Power of the Test", type="l", col = "red") + lines(power200[,1],power200[,2], col = "blue") +lines(power300[,1],power300[,2], col = "purple") 
+legend("bottomright",legend=c("n=100","n=200","n=300"),col=c("red","blue","purple"),lty=1)
+```
+From this graph we can see that as we increase n, the power of the test increases much faster. Which means when we have more samples the power of the test is also much higher, so our predictions are much more accurate. Making sure we don't get type two errors. 
