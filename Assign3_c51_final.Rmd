@@ -1,0 +1,416 @@
+---
+title: "Assign3_c51"
+author: "Ankit Jhurani"
+date: "07/03/2021"
+output:
+  html_document:
+    df_print: paged
+latex_engine: xelatex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+```
+
+
+## Q2
+
+An experiment analyzes imperfection rates for two processes usedto fabricate silicon wafers for computer chips.  For treatment A applied to 10wafers, the numbers of imperfections are 8, 5, 6, 6, 5, 4, 7, 2, 3, 4.  Treatment B applied to 10 other wafers has 9, 10, 8, 14, 8, 13, 11, 4, 7, 6 imperfections.Treat the counts as independent Poisson random variables having means μA and μB.
+
+
+# 2(a)
+
+Fit the model $log(\mu)=\alpha+\beta x$, where x= 1 for treatment B and x= 0 for treatment A.
+
+Given treatment groups A and B and the number of imperfections for each
+
+```{r}
+A = c(2,3,3,4,4,6,6,7,7,8)
+B = c(4,6,7,8,8,9,10,11,13,14)
+```
+
+# Data frame of both treatments
+
+```{r}
+wafer = data.frame(A = A, B = B)
+wafer = wafer %>% pivot_longer(cols = c(A,B), names_to = "treatment", values_to = 'n' ) %>% 
+  arrange(treatment)
+
+wafer
+```
+
+# Poisson Regression Model
+
+```{r}
+glm1 <- glm(n ~ treatment, data = wafer, family = 'poisson')
+summary(glm1)
+```
+# Mean for the two groups A and B
+
+```{r}
+mu_A <- mean(subset(wafer, treatment == "A")$n)
+paste("mean for Group A =", mu_A)
+
+mu_B <- mean(subset(wafer, treatment == "B")$n) 
+paste("mean for Group B =",mu_B)
+```
+
+Value of beta as per the formula
+
+```{r}
+beta <- log(mu_B/mu_A)
+beta
+beta_n <- mu_B/mu_A
+beta_n
+```
+
+## Question 3
+
+```{r}
+crabs = read.table("horseshoecrabs-1.dat", header = T)
+crabs
+
+```
+
+### a)
+
+```{r}
+attach(crabs)
+fitcrab = glm(Satellites~Weight, family = poisson, data = crabs)
+summary(fitcrab)
+```
+The prediction equation is $\hat\mu =exp(-0.42841+0.58930Weight)$
+
+### b) 
+```{r}
+Beta_confint_U = 0.58930 + 1.96*0.06502
+Beta_confint_L = 0.58930 - 1.96*0.06502
+multi_effect_U = (exp(Beta_confint_U))
+multi_effect_L = (exp(Beta_confint_L))
+cbind(Beta_confint_L, Beta_confint_U)
+cbind(multi_effect_L, multi_effect_U)
+```
+The 95% Wald confidence interval of $\hat\beta$ is (0.4618608, 0.7167392). We are 95% confident that the actual value of $\beta$ is in the interval. The 95% Wald confidence interval of the multiplicative effect of a 1kg increase on Y is (1.587024, 2.047745). We are 95% confident that the actual value of the multiplicative effect of a 1kg increase on Y is in the interval.
+
+### c)
+$$H_0: \beta=0 \ vs \ H_1: \beta\neq0$$
+```{r}
+drop1(fitcrab, test = "Chisq")
+```
+Therefore, since the p value 2.2e-16 is less than 0.05, we reject the null hypothesis. So $\beta$ is not 0.
+
+### d)
+```{r}
+resid.z = rstandard(fitcrab)
+pred = fitcrab$fitted.values
+plot(pred, resid.z, pch=20, col="red")
+abline(c(0,0))
+```
+There appears to be several outliers. 
+
+### e)
+```{r}
+fitcrab$deviance
+```
+The deviance is 560.8664. We can use the deviance to test goodness-of-fit because of its relation to the likelihood ratio and its test statistic. 
+
+## Question 4
+
+### a)
+```{r, echo=FALSE}
+new1 <- c()
+new2 <- c()
+new3 <- c()
+new4 <- c()
+new5 <- c()
+new6 <- c()
+new7 <- c()
+new8 <- c()
+new9 <- c()
+new10 <- c()
+new11 <- c()
+for(i in 1:173){
+  if(crabs[i,]$Weight<=1.5){
+    new1 <- new1
+    row1 <- crabs[i,]
+    new1 <- rbind(new1, row1)
+  }
+  if(crabs[i,]$Weight>1.5 & crabs[i,]$Weight<=1.7){
+    new2 <- new2
+    row2 <- crabs[i,]
+    new2 <- rbind(new2, row2)
+  }
+  if(crabs[i,]$Weight>1.7 & crabs[i,]$Weight<=1.9){
+    new3 <- new3
+    row3 <- crabs[i,]
+    new3 <- rbind(new3, row3)
+  }
+  if(crabs[i,]$Weight>1.9 & crabs[i,]$Weight<=2.1){
+    new4 <- new4
+    row4 <- crabs[i,]
+    new4 <- rbind(new4, row4)
+  }
+  if(crabs[i,]$Weight>2.1 & crabs[i,]$Weight<=2.3){
+    new5 <- new5
+    row5 <- crabs[i,]
+    new5 <- rbind(new5, row5)
+  }
+  if(crabs[i,]$Weight>2.3 & crabs[i,]$Weight<=2.5){
+    new6 <- new6
+    row6 <- crabs[i,]
+    new6 <- rbind(new6, row6)
+  }
+  if(crabs[i,]$Weight>2.5 & crabs[i,]$Weight<=2.7){
+    new7 <- new7
+    row7 <- crabs[i,]
+    new7 <- rbind(new7, row7)
+  }
+  if(crabs[i,]$Weight>2.7 & crabs[i,]$Weight<=2.9){
+    new8 <- new8
+    row8 <- crabs[i,]
+    new8 <- rbind(new8, row8)
+  }
+  if(crabs[i,]$Weight>2.9 & crabs[i,]$Weight<=3.1){
+    new9 <- new9
+    row9 <- crabs[i,]
+    new9 <- rbind(new9, row9)
+  }
+  if(crabs[i,]$Weight>3.1 & crabs[i,]$Weight<=3.3){
+    new10 <- new10
+    row10 <- crabs[i,]
+    new10 <- rbind(new10, row10)
+  }
+  if(crabs[i,]$Weight>3.3){
+    new11 <- new11
+    row11 <- crabs[i,]
+    new11 <- rbind(new11, row11)
+  }
+}
+Num_Cases = c(nrow(new1),nrow(new2),nrow(new3),nrow(new4),nrow(new5),nrow(new6),nrow(new7),
+              nrow(new8),nrow(new9),nrow(new10),nrow(new11))
+Sample_Mean = c((sum(new1$Satellites)/nrow(new1)),(sum(new2$Satellites)/nrow(new2)),
+                (sum(new3$Satellites)/nrow(new3)),(sum(new4$Satellites)/nrow(new4)),
+                (sum(new5$Satellites)/nrow(new5)),(sum(new6$Satellites)/nrow(new6)),
+                (sum(new7$Satellites)/nrow(new7)),(sum(new8$Satellites)/nrow(new8)),
+                (sum(new9$Satellites)/nrow(new9)),(sum(new10$Satellites)/nrow(new10)),
+                (sum(new11$Satellites)/nrow(new11)))
+Sample_Var = c(sum((new1$Satellites-Sample_Mean[1])^2)/(Num_Cases[1]-1),
+               sum((new2$Satellites-Sample_Mean[2])^2)/(Num_Cases[2]-1),
+               sum((new3$Satellites-Sample_Mean[3])^2)/(Num_Cases[3]-1),
+               sum((new4$Satellites-Sample_Mean[4])^2)/(Num_Cases[4]-1),
+               sum((new5$Satellites-Sample_Mean[5])^2)/(Num_Cases[5]-1),
+               sum((new6$Satellites-Sample_Mean[6])^2)/(Num_Cases[6]-1),
+               sum((new7$Satellites-Sample_Mean[7])^2)/(Num_Cases[7]-1),
+               sum((new8$Satellites-Sample_Mean[8])^2)/(Num_Cases[8]-1),
+               sum((new9$Satellites-Sample_Mean[9])^2)/(Num_Cases[9]-1),
+               sum((new10$Satellites-Sample_Mean[10])^2)/(Num_Cases[10]-1),
+               sum((new11$Satellites-Sample_Mean[11])^2)/(Num_Cases[11]-1))
+```
+```{r}
+table = data.frame(Weight = c("1.5", "1.5-1.7", "1.7-1.9", "1.9-2.1", "2.1-2.3", "2.3-2.5", "2.5-2.7", "2.7-2.9",
+                              "2.9-3.1","3.1-3.3", "3.3"),
+                   Num_Cases = Num_Cases, Sample_Mean = Sample_Mean, Sample_Var = Sample_Var)
+table
+```
+There is evidence of overdispersion. In some of the weight groups the number of cases and variance are extremely high. 
+
+### b)
+
+```{r}
+library(MASS)
+attach(crabs)
+negbinom = glm.nb(Satellites~Weight, data = crabs)
+summary(negbinom)
+```
+The prediction equation is .The dispersion parameter $\theta = 0.931$ an the $SE = 0.1638$.
+
+### c)
+```{r}
+Beta_confint_U = 0.7603 + 1.96*0.1578
+Beta_confint_L = 0.7603 - 1.96*0.1578
+Beta_e_U = (exp(Beta_confint_U))
+Beta_e_L = (exp(Beta_confint_L))
+cbind(Beta_e_L, Beta_e_U)
+```
+The Wald confidence interval for $e^\beta$ is (1.5699, 2.914179). From the previous question the Wald CI for $e^\beta$ of Poisson regression is (1.587024, 2.047745). The interval for the negative binomial is wider because   
+it gives a larger SE to account for dispersion.
+
+### d)
+
+```{r}
+resid.z = rstandard(negbinom)
+pred = negbinom$fitted.values
+plot(pred, resid.z, pch=20, col="red")
+abline(c(0,0))
+```
+Yes there is one outlier. 
+
+
+
+
+
+## Q5
+
+The  table  below  refers  to  ratings  of  agricultural  extension  agents  in  NorthCarolina.  In each of 5 districts,  agents were classified by their race and bywhether they got a merit pay increase.  The data can be load in R using the R codes below,
+
+# 5(a)
+
+Fit a logistic regression model with the main effects of race and districtbut no interaction.  Show how you test whether the merit pay increase isindependent of race, conditional on the district using a Wald test and aLR test about a parameter in the logistic regression model you just fit.
+
+```{r}
+library(readxl)
+```
+
+```{r}
+PayYes <- c(24,10,5,16,7,47,45,57,54,59)
+PayNo <- c(9,3,4,7,4,12,8,9,10,12)
+District <- rep(c("NC", "NE", "NW", "SE", "SW"),2)
+Race <- c(rep("Blacks",5),rep("Whites",5))
+Paydata <- data.frame(Race, District, PayYes, PayNo)
+Paydata <- Paydata %>% mutate(District =  as.factor(District),Race = as.factor(Race))
+```
+
+```{r}
+glm1<- glm(cbind(PayYes, PayNo) ~ Race + District,  family = binomial(logit), data = Paydata)
+summary(glm1)
+```
+## 5(b)
+
+Estimate  the  common  odds  ratio  between  Merit  Pay  and  Race  based on  the  logistic  model  in  the  previous  part,  and  report  the  95%  Wald confidence interval and the 95% likelihood ratio confidence interval for the common odds ratio.  Interpret the confidence intervals.
+
+```{r}
+glm2 <- glm(cbind(PayYes, PayNo) ~ District,  family = binomial(logit), data = Paydata)
+summary(glm2)
+```
+
+```{r}
+anova(glm1, glm2, test = "LRT")
+```
+The p-value is 0.006553 which is < than 0.05. Therefore, the null hypothesis is rejected and we clam that the result is statistically significant and that the alternative hypothesis is true about Merit Pay and Race. 
+
+```{r}
+confint(glm1, "RaceWhites")
+
+exp(confint(glm1, "RaceWhites"))
+```
+
+
+# 5(c)
+
+Test  whether  the  association  between  merit  pay  decision  and  race  is homogeneous across the five districts using a likelihood ratio test.  Please report  the  test  statistic,  degrees  of  freedom,  P-value,  and  then  make conclusion.
+
+```{r}
+glm3 <- glm(cbind(PayYes, PayNo) ~ Race*District,  family = binomial(logit), data = Paydata)
+summary(glm3)
+```
+
+```{r}
+anova(glm1, glm3, test = "LRT")
+```
+
+Over here the p-value is 0.7227 which is > than 0.05. Therefore, we cannot conclude that a significant difference exists between Race and District.
+
+## Q6
+
+We  are  using  the  same  MBTI  dataset.   We  fit  a  model  usingthe four scales as predictors of whether a subject drinks alcohol frequently. Answer the following questions.
+
+# 6(a)
+
+Conduct a model goodness-of-fit test, and interpret.  If you were to simplify the model by removing a predictor, which would you remove? Why?
+
+```{r}
+MBTI <- read_csv("MBTI.csv")
+MBTI <-  mutate(MBTI, EI = as.factor(EI), 
+                      SN = as.factor(SN), 
+                      TF = as.factor(TF), 
+                      JP = as.factor(JP), 
+                      nondrink = n-drink)
+
+glm1 <- glm(cbind(drink, nondrink) ~ EI + SN + TF + JP, family = binomial(logit), data = MBTI)
+summary(glm1)
+```
+Goodness of fit test
+For goodness of fit test, we can perform a deviance test using the model residual deviance. The Deviance test is a likelihood ratio test between the fitted model & the saturated model (one in which each observation gets its own parameter). 
+
+```{r}
+glm1$deviance
+
+glm1$df.residual
+```
+The fitted models residual deviance and residual degree of freedom are 11.14907 and 11 respectively. Residual deviance is a measure analogous to Sum of Squared Errors in regression.
+Null Hypothesis: all the n parameters in saturated model are insignificant. Under the Null Hypothesis, the residual deviance statistic is Chi square distribution with degrees of freedom equal to residual degree of freedom.
+
+
+p-value
+
+```{r}
+1-pchisq(glm1$deviance,df = glm1$df.residual)
+```
+P-value at 0.4308605 is > 0.05 means that we fail to reject the Null Hypothesis, ie, is there is significant evidence that parameters of the saturated model are insignificant. The fitted model performs as good as Saturated model.
+
+
+
+## 6(b)
+
+Report AIC values for the model with the four main effects and the six interaction terms; the model with only the four main effect; the model with no predictors. According to this criterion, which model is preferred? Explain the rationale for using AIC.
+
+```{r}
+glm2 = glm(cbind(drink, nondrink) ~ (EI + SN + TF + JP)^2, family = binomial(logit), data = MBTI)
+
+summary(glm2)
+```
+
+```{r}
+glm3 = glm(cbind(drink, nondrink) ~ 1, family = binomial(logit), data = MBTI)
+summary(glm3)
+```
+
+The AIC values for each of these three models can be obtained
+
+```{r}
+glm1$aic
+glm2$aic
+glm3$aic
+```
+
+AIC is a “relative” parameter used for selection of statistical models. It is a measure of errors in the model and its value depends on number of model parameters and the goodness of fit. The AIC takes into account the goodness of fit while penalizing the number of parameters and complexity in the model that can lead to over fitting. Given a set of candidate models for the data, the preferred model is the one with the minimum AIC value. 
+AIC is thus useful in determining best model out of a set of models. One disadvantage of AIC is that it is a relative quality of models.
+
+# 6(c)
+
+Using the MBTI data set, use model-building methods to select a model for this alcohol response variable.
+
+For comparing the 3 models, we can use a Likelihood ratio test for comparing models. The test compares the likelihood of the data under the two models. If P value is small, it means that the model with more number of predictors is significant compared to the model with the fewer number of predictors.
+Model with 4 main effects vs model with no predictors
+The simpler model (with fewer predictors is considered as model 1).
+Null Hypothesis is that the coefficients of the predictors variables in model 2 is not significant.
+
+
+```{r}
+anova(glm3, glm1, test = "LRT")
+```
+
+The p value of the model is 0. 0006741 < 0.05. So, we conclude that the model with the 4 main predictors is significant compared to the model with no predictors.
+Model with 4 main effects + 6 interaction vs model with no predictors
+The simpler model (with fewer predictors is considered) as model 1. The complex model with more number of predictors is model 2
+Null Hypothesis is that the coefficients of the predictors variables in model 2 is not significant.
+
+```{r}
+anova(glm3, glm2, test = "LRT")
+```
+
+The p value of the model is 0. 002855 < 0.05. So, we conclude that the model with the 4 main predictors and 6 interaction terms is significant compared to the model with no predictors.
+Model with 4 main effects + 6 interaction vs model 4 main effects only
+Here the simpler model (with fewer predictors) is the one with as 4 main predictors(glm1). The complex model with more number of predictors (glm3) is model 2
+Null Hypothesis is that the coefficients of the extra predictors variables in model 2 is not significant.
+
+```{r}
+anova(glm2, glm1, test = "LRT")
+```
+
+The p value of the model is 0. 2847 > 0.05. So, we see that the model with the 4 main predictors and 6 interaction terms is not very significant compared to the 4 main predictors only. Hence, the simpler model may be chosen as the final model.
+Using the Likelihood ratio test, we conclude that the model with 4 main predictors (glm1) is the best one of the 3 models that can be used for prediction.
+
